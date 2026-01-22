@@ -1,0 +1,208 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>카드 벌칙 게임</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  background: #0f172a;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+}
+
+h1 { margin: 10px; }
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+button {
+  padding: 8px 14px;
+  font-size: 14px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.reset { background: #22c55e; color: #111; }
+.full { background: #38bdf8; color: #111; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  padding: 10px;
+  max-width: 600px;
+  margin: auto;
+}
+
+.card {
+  perspective: 1000px;
+}
+
+.inner {
+  width: 100%;
+  height: 110px;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.flipped {
+  transform: rotateY(180deg);
+  pointer-events: none;
+}
+
+.front, .back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  font-weight: bold;
+}
+
+.front {
+  background: #2563eb;
+  font-size: 24px;
+}
+
+.back {
+  transform: rotateY(180deg);
+  font-size: 14px;
+  padding: 8px;
+}
+
+.penalty { background: #f59e0b; color: #111; }
+.luck { background: #22c55e; color: #111; }
+</style>
+</head>
+
+<body>
+
+<h1>🎴 카드 벌칙 게임</h1>
+
+<div class="controls">
+  <button class="reset" onclick="resetGame()">🔄 리셋</button>
+  <button class="full" onclick="toggleFull()">📱 전체화면</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- 🔊 효과음 -->
+<audio id="flipSound" src="flip.mp3" preload="auto"></audio>
+<audio id="penaltySound" src="penalty.mp3" preload="auto"></audio>
+<audio id="luckSound" src="luck.mp3" preload="auto"></audio>
+
+<script>
+// =======================
+// 🔊 모바일 오디오 깨우기
+// =======================
+let audioEnabled = false;
+
+function enableAudio() {
+  if (audioEnabled) return;
+  audioEnabled = true;
+
+  document.getElementById("flipSound").play().catch(()=>{});
+  document.getElementById("penaltySound").play().catch(()=>{});
+  document.getElementById("luckSound").play().catch(()=>{});
+}
+
+// =======================
+// 🎴 카드 데이터
+// =======================
+const penalties = [
+  "노래 한 곡 🎤",
+  "원샷 🍺",
+  "춤 10초 💃",
+  "애교 3종 💕"
+];
+
+const lucks = [
+  "면제 🎉",
+  "벌칙 1명 지목 👈"
+];
+
+let cards = [];
+const grid = document.getElementById("grid");
+
+// =======================
+// 🔀 셔플
+// =======================
+function shuffle() {
+  cards = penalties.map(t => ({ text: t, type: "penalty" }))
+    .concat(lucks.map(t => ({ text: t, type: "luck" })))
+    .sort(() => Math.random() - 0.5);
+}
+
+// =======================
+// 🧩 카드 생성
+// =======================
+function createCards() {
+  grid.innerHTML = "";
+
+  cards.forEach((c, i) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="inner">
+        <div class="front">${i + 1}</div>
+        <div class="back ${c.type}">${c.text}</div>
+      </div>
+    `;
+
+    card.onclick = () => {
+      enableAudio(); // 🔥 이게 핵심
+
+      const inner = card.querySelector(".inner");
+      inner.classList.add("flipped");
+
+      document.getElementById("flipSound").play();
+
+      document.getElementById(
+        c.type === "penalty" ? "penaltySound" : "luckSound"
+      ).play();
+    };
+
+    grid.appendChild(card);
+  });
+}
+
+// =======================
+// 🔄 리셋
+// =======================
+function resetGame() {
+  shuffle();
+  createCards();
+}
+
+// =======================
+// 📱 풀스크린
+// =======================
+function toggleFull() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// 최초 실행
+shuffle();
+createCards();
+</script>
+
+</body>
+</html>
